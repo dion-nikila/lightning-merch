@@ -1,53 +1,27 @@
 'use strict';
-// Each gesture is finite. A quiet page schedules no drawing loop.
-const svgNS='http://www.w3.org/2000/svg';
-function drawing(tag,attrs){
-  const node=document.createElementNS(svgNS,tag);
-  for(const [key,value] of Object.entries(attrs))node.setAttribute(key,value);
-  return node;
-}
-const marks=[
- 'M13 36Q20 16 49 11M20 31Q27 19 39 16',
- 'M108 21l7 -8m-2 15 13 -4m-13 12 9 2',
- 'M17 91q-8 11 14 7t20 -2',
- 'M96 94q21 -1 24 -16m-5 5 5 -6 3 8'
+const plates=[
+ {title:'Race kit',numbers:'01 — 02',items:[0,1,2,7],details:['neck binding','five-panel crown','side stripe','diagonal panel']},
+ {title:'Warm-up',numbers:'03 — 04',items:[5,4,6,3],details:['shoulder seam','raglan sleeve','curved brim','ribbed cuff']},
+ {title:'Carry',numbers:'05 — 06',items:[8,9,10],details:['canvas handle','split hem','loop cap']}
 ];
-board.querySelectorAll('.item').forEach((item,index)=>{
- const ink=drawing('svg',{viewBox:'0 0 134 112',class:'hover-ink','aria-hidden':true});
- ink.append(drawing('path',{d:marks[index%marks.length],pathLength:1}));
- item.append(ink);
-});
-const margin=drawing('svg',{class:'margin-ink',viewBox:'0 0 1000 680',preserveAspectRatio:'none','aria-hidden':true});
-const notes=[
- ['M24 93q13 -7 19 -21l-8 4 8 -17 -17 18 9 -2 -11 18', '#de6b3a'],
- ['M718 31q10 -6 18 -3t18 -4m-30 11 25 -7','#777066'],
- ['M913 393q21 10 45 -8m-12 2 12 -2 -4 10','#847d71'],
- ['M91 591l25 -6 -14 8 28 -9 -9 7 17 -5','#be603b'],
- ['M505 348q-8 8 -5 13m3 -18q-8 7 -9 13','#aba59c']
-];
-for(const [d,stroke] of notes)margin.append(drawing('path',{d,stroke,fill:'none','stroke-width':1.35,'stroke-linecap':'round','vector-effect':'non-scaling-stroke'}));
-board.after(margin);
-const strokeLayer=drawing('svg',{'aria-hidden':true,class:'pencil-layer'});
-document.body.append(strokeLayer);
-let live=null,lastPoint=null;
-function stopStroke(){
- if(!live)return;
- const path=live;
- live=null;lastPoint=null;
- path.classList.add('fading');
- setTimeout(()=>path.remove(),1100);
+const merchandise=[...board.querySelectorAll('.item')];
+function element(tag,cls,txt){const node=document.createElement(tag);node.className=cls;if(txt)node.textContent=txt;return node}
+for(const [idx,plate] of plates.entries()){
+ const sheet=element('section','sheet sheet-'+(idx+1));sheet.id='sheet-'+(idx+1);sheet.setAttribute('aria-label',plate.title+' spread');
+ const title=element(idx===0?'h1':'h2','sheet-title',plate.title);sheet.append(title);
+ if(idx===0){const runner=new Image();runner.src='studies/stride.webp';runner.alt='';runner.className='stride';sheet.append(runner)}
+ for(const [slot,id] of plate.items.entries()){
+   const button=merchandise[id];button.classList.add('slot-'+slot);
+   const note=element('span','pencil-note',plate.details[slot]);note.setAttribute('aria-hidden','true');
+   note.insertAdjacentHTML('afterbegin','<svg viewBox="0 0 76 32" aria-hidden="true"><path d="M72 3 C50 4 33 24 6 25 m8 -5 -9 6 11 1" pathLength="1"/></svg>');
+   button.append(note);sheet.append(button);
+ }
+ sheet.append(element('span','folio-number',plate.numbers));
+ board.append(sheet);
 }
-board.addEventListener('pointerdown',e=>{
- if(reduce.matches||e.pointerType!=='mouse'||e.button!==0||e.target!==board)return;
- stopStroke();
- live=drawing('path',{d:'M'+e.clientX+' '+e.clientY});
- strokeLayer.append(live);lastPoint=[e.clientX,e.clientY];
- board.setPointerCapture(e.pointerId);
-});
-board.addEventListener('pointermove',e=>{
- if(!live)return;
- if(Math.hypot(e.clientX-lastPoint[0],e.clientY-lastPoint[1])<3)return;
- live.setAttribute('d',live.getAttribute('d')+' L'+e.clientX+' '+e.clientY);
- lastPoint=[e.clientX,e.clientY];
-});
-for(const type of ['pointerup','pointercancel','lostpointercapture'])board.addEventListener(type,stopStroke);
+const tabs=[...document.querySelectorAll('.folios a')];
+const sheets=[...board.querySelectorAll('.sheet')];
+function setTab(sheet){tabs.forEach((a,i)=>{if(sheets[i]===sheet)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current')})}
+setTab(sheets[0]);
+const watch=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting)setTab(entry.target)},{rootMargin:'-30% 0px -30%'});
+sheets.forEach(sheet=>watch.observe(sheet));

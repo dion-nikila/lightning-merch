@@ -13,7 +13,7 @@ const catalog=[
  ['Track tote','Natural',null,53,81,11,72,81,26,8],
  ['Split shorts','Carbon / orange',clothes,75,80,15,74,41,33,-8],
  ['Race bottle','Signal orange',null,91,74,7,70,94,17,11]
-].map(([name,color,sizes,x,y,w,mx,my,mw,r],i)=>({name,color,sizes:sizes||['One size'],x,y,w,mx,my,mw,r,id:i,code:'LBN-'+String(i+1).padStart(3,'0'),art:(sketchEdition?'art/':'products/')+String(i+1).padStart(2,'0')+(sketchEdition?'.svg':'.png?v=2'),price:null,available:true}));
+].map(([name,color,sizes,x,y,w,mx,my,mw,r],i)=>({name,color,sizes:sizes||['One size'],x,y,w,mx,my,mw,r,id:i,code:'LBN-'+String(i+1).padStart(3,'0'),art:(sketchEdition?'studies/':'products/')+String(i+1).padStart(2,'0')+(sketchEdition?'.webp':'.png?v=2'),price:null,available:true}));
 const $=s=>document.querySelector(s),board=$('#board'),dialog=$('dialog'),panel=$('#panel');
 const reduce=matchMedia('(prefers-reduced-motion: reduce)'),storageKey='lightning-merch-cart-v1';
 let cart=[],lastFocus;
@@ -22,7 +22,7 @@ function sync(){try{localStorage.setItem(storageKey,JSON.stringify(cart))}catch{
 function back(){if(history.state?.merch)history.back();else{history.replaceState(null,'',location.pathname);render()}}
 function openPage(key){if(!dialog.open)lastFocus=document.activeElement;history.pushState({merch:true},'','#'+key);render()}
 for(const p of catalog){
- const el=document.createElement('button');el.className='item';el.setAttribute('aria-label',p.name+', '+p.color);
+ const el=document.createElement('button');el.className='item';el.dataset.productId=p.id;el.setAttribute('aria-label',p.name+', '+p.color);
  for(const key of ['x','y','w','mx','my','mw'])el.style.setProperty('--'+key,p[key]+'%');
  el.style.setProperty('--r',p.r+'deg');el.innerHTML='<img class="art" alt="" draggable="false" src="'+p.art+'"><small>'+p.code+'</small>';
  el.onclick=()=>openPage(p.code);el.onpointermove=e=>{if(e.pointerType!=='mouse'||reduce.matches)return;const box=el.getBoundingClientRect();el.style.setProperty('--dx',((e.clientX-box.left)/box.width-.5)*10+'px')};board.append(el);
@@ -43,7 +43,7 @@ dialog.addEventListener('keydown',e=>{
  if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();browse(p,e.key==='ArrowLeft'?-1:1)}
 });
 function product(p){
- const from=board.children[p.id].querySelector('img').getBoundingClientRect();panel.className='detail';
+ const from=board.querySelector('[data-product-id="'+p.id+'"] img').getBoundingClientRect();panel.className='detail';
  const swatch = {'Signal orange':'#ff580b','Carbon':'#272420','Chalk':'#f1e6d5','Bone':'#ede1cc','Natural':'#e4d5b8','Carbon / orange':'#272420','Chalk / orange':'#f1e6d5'}[p.color];
  panel.innerHTML = `
    <div class="stage">
