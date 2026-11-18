@@ -1,12 +1,8 @@
 'use strict';
 const sketchEdition=document.body.dataset.edition==='sketch';
 const clothes=['S','M','L','XL'];
-const clubColors={
- 'Signal orange':['Bolt red','#c62e2d'], 'Carbon':['Club cobalt','#1c45c1'],
- 'Chalk':['Cream','#f9f7f1'], 'Chalk / orange':['Cream / bolt red','#f9f7f1'],
- 'Bone':['Cream','#f9f7f1'], 'Natural':['Natural canvas','#f9f7f1'],
- 'Carbon / orange':['Cobalt / bolt red','#1c45c1']
-};
+const penColors=[null,'Blue ink','Paper / orange','Paper / orange','Paper / black','Blue ink','Orange ink','Blue / orange','Paper / orange','Blue / orange','Blue ink'];
+const penSwatches={'Blue ink':'#313893','Paper / orange':'#fff8ec','Paper / black':'#f8f5ed','Orange ink':'#e38024','Blue / orange':'#313893'};
 const catalog=[
  ['Running tank','Signal orange',clothes,16,20,11,25,10,26,-12],
  ['Club cap','Carbon',null,40,14,15,74,5,31,-9],
@@ -19,11 +15,12 @@ const catalog=[
  ['Track tote','Natural',null,53,81,11,72,81,26,8],
  ['Split shorts','Carbon / orange',clothes,75,80,15,74,41,33,-8],
  ['Race bottle','Signal orange',null,91,74,7,70,94,17,11]
-].map(([name,color,sizes,x,y,w,mx,my,mw,r],i)=>({name,color:sketchEdition?clubColors[color][0]:color,clubSwatch:sketchEdition?clubColors[color][1]:null,sizes:sizes||['One size'],x,y,w,mx,my,mw,r,id:i,code:'LBN-'+String(i+1).padStart(3,'0'),art:(sketchEdition?'ink/':'products/')+String(i+1).padStart(2,'0')+(sketchEdition?'.svg?club=1':'.png?v=2'),price:null,available:true}));
+].map(([name,color,sizes,x,y,w,mx,my,mw,r],i)=>({name,color:sketchEdition?penColors[i]:color,clubSwatch:sketchEdition?penSwatches[penColors[i]]:null,sizes:sizes||['One size'],x,y,w,mx,my,mw,r,id:i,code:'LBN-'+String(i+1).padStart(3,'0'),art:(sketchEdition?'hand/':'products/')+String(i+1).padStart(2,'0')+(sketchEdition?'.webp':'.png?v=2'),price:null,available:true})).filter(p=>!sketchEdition||p.id!==0);
+const byId=new Map(catalog.map(p=>[p.id,p]));
 const $=s=>document.querySelector(s),board=$('#board'),dialog=$('dialog'),panel=$('#panel');
-const reduce=matchMedia('(prefers-reduced-motion: reduce)'),storageKey='lightning-merch-cart-v1';
+const reduce=matchMedia('(prefers-reduced-motion: reduce)'),storageKey=sketchEdition?'lightning-hand-cart-v1':'lightning-merch-cart-v1';
 let cart=[],lastFocus;
-try{const data=JSON.parse(localStorage.getItem(storageKey));if(Array.isArray(data))cart=data.filter(v=>v&&catalog[v.id]?.sizes.includes(v.size)&&Number.isSafeInteger(v.qty)&&v.qty>0)}catch{}
+try{const data=JSON.parse(localStorage.getItem(storageKey)??localStorage.getItem('lightning-merch-cart-v1'));if(Array.isArray(data))cart=data.filter(v=>v&&byId.get(v.id)?.sizes.includes(v.size)&&Number.isSafeInteger(v.qty)&&v.qty>0)}catch{}
 function sync(){try{localStorage.setItem(storageKey,JSON.stringify(cart))}catch{}document.querySelectorAll('.cart-button b').forEach(b=>b.textContent='('+cart.reduce((n,v)=>n+v.qty,0)+')')}
 function back(){if(history.state?.merch)history.back();else{history.replaceState(null,'',location.pathname);render()}}
 function openPage(key){if(!dialog.open)lastFocus=document.activeElement;history.pushState({merch:true},'','#'+key);render()}
@@ -35,7 +32,7 @@ for(const p of catalog){
 }
 let switching=false;
 function browse(p,step){
- const next=catalog[(p.id+step+catalog.length)%catalog.length];
+ const next=catalog[(catalog.indexOf(p)+step+catalog.length)%catalog.length];
  history.replaceState({merch:history.state?.merch||false},'','#'+next.code);
  switching=true;
  product(next);
@@ -56,7 +53,7 @@ function product(p){
      <img class="hero" src="${p.art}" alt="${p.color} ${p.name}">
      <nav class="piece-nav" aria-label="Browse the collection">
        <button data-step="-1" aria-label="Previous item">←</button>
-       <span>${String(p.id+1).padStart(2,'0')} <em>/</em> ${catalog.length}</span>
+       <span>${String(catalog.indexOf(p)+1).padStart(2,'0')} <em>/</em> ${catalog.length}</span>
        <button data-step="1" aria-label="Next item">→</button>
      </nav>
    </div>
@@ -89,8 +86,8 @@ function product(p){
 }
 function basket(){
  panel.className='cart';panel.innerHTML='<h1 id="title">Your cart</h1>';if(!cart.length){panel.insertAdjacentHTML('beforeend','<p>Your cart is empty.</p>');return}
- cart.forEach((v,i)=>{const p=catalog[v.id],row=document.createElement('div');row.className='line';row.innerHTML='<img alt="" src="'+p.art+'"><div>'+p.name+'<br><small>'+p.color+' / '+v.size+'</small></div><div class="actions"><button aria-label="Decrease quantity">−</button><span>'+v.qty+'</span><button aria-label="Increase quantity">+</button><button aria-label="Remove item">×</button></div>';row.querySelectorAll('button').forEach((b,j)=>b.onclick=()=>{if(j===2)cart.splice(i,1);else{v.qty+=j===0?-1:1;if(v.qty===0)cart.splice(i,1)}sync();basket();(panel.querySelectorAll('.line')[Math.min(i,cart.length-1)]?.querySelectorAll('button')[j]||$('#back')).focus()});panel.append(row)});
- if(cart.every(v=>catalog[v.id].price!=null))panel.insertAdjacentHTML('beforeend','<p>Subtotal · LKR '+cart.reduce((n,v)=>n+catalog[v.id].price*v.qty,0).toLocaleString()+'</p>');
+ cart.forEach((v,i)=>{const p=byId.get(v.id),row=document.createElement('div');row.className='line';row.innerHTML='<img alt="" src="'+p.art+'"><div>'+p.name+'<br><small>'+p.color+' / '+v.size+'</small></div><div class="actions"><button aria-label="Decrease quantity">−</button><span>'+v.qty+'</span><button aria-label="Increase quantity">+</button><button aria-label="Remove item">×</button></div>';row.querySelectorAll('button').forEach((b,j)=>b.onclick=()=>{if(j===2)cart.splice(i,1);else{v.qty+=j===0?-1:1;if(v.qty===0)cart.splice(i,1)}sync();basket();(panel.querySelectorAll('.line')[Math.min(i,cart.length-1)]?.querySelectorAll('button')[j]||$('#back')).focus()});panel.append(row)});
+ if(cart.every(v=>byId.get(v.id).price!=null))panel.insertAdjacentHTML('beforeend','<p>Subtotal · LKR '+cart.reduce((n,v)=>n+byId.get(v.id).price*v.qty,0).toLocaleString()+'</p>');
  panel.insertAdjacentHTML('beforeend','<p class="muted">Collection preview · Orders haven’t opened yet.</p>')
 }
 function render(){const key=location.hash.slice(1),p=catalog.find(p=>p.code===key);if(!p&&key!=='cart'){if(dialog.open)dialog.close();lastFocus?.focus({preventScroll:true});return}
