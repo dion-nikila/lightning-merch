@@ -14,10 +14,10 @@ if(await page.locator('body[data-edition="sketch"]').count()){
  const drawing=await page.locator('#board h1').boundingBox();
  assert(Math.abs(drawing.x+drawing.width/2-width/2)<2);
  assert.equal(await page.locator('body > header').count(),0);
- assert(await page.locator('#board h1 img').evaluate(img=>img.complete&&img.naturalWidth&&img.src.endsWith('/ink/patch.svg')));
- const expected=await page.evaluate(()=>matchMedia('(max-width:700px) and (orientation:portrait),(max-aspect-ratio:4/5)').matches?'tall-linked.webp':'wide-linked.webp');
+ assert(await page.locator('#board h1 img').evaluate(img=>img.complete&&img.naturalWidth&&img.src.endsWith('/ink/club-logo.jpg')));
+ const expected=await page.evaluate(()=>matchMedia('(max-width:700px) and (orientation:portrait),(max-aspect-ratio:4/5)').matches?'tall-club.webp':'wide-club.webp');
  assert((await page.locator('#board').evaluate(el=>getComputedStyle(el).backgroundImage)).includes(expected));
- for(const [route,asset] of [['#LBN-001','detail-margin.svg'],['#cart','cart-margin.svg']]){
+ for(const [route,asset] of [['#LBN-001','detail-club.svg'],['#cart','cart-club.svg']]){
    await page.goto(new URL(route,page.url()).href);
    await page.waitForSelector(route==='#cart'?'dialog[open] .cart':'dialog[open] .detail');
    const url=await page.locator('dialog').evaluate(el=>getComputedStyle(el).backgroundImage.match(/url\("?(.*?)"?\)/)[1]);

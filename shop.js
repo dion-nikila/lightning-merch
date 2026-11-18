@@ -1,6 +1,12 @@
 'use strict';
 const sketchEdition=document.body.dataset.edition==='sketch';
 const clothes=['S','M','L','XL'];
+const clubColors={
+ 'Signal orange':['Bolt red','#c62e2d'], 'Carbon':['Club cobalt','#1c45c1'],
+ 'Chalk':['Cream','#f9f7f1'], 'Chalk / orange':['Cream / bolt red','#f9f7f1'],
+ 'Bone':['Cream','#f9f7f1'], 'Natural':['Natural canvas','#f9f7f1'],
+ 'Carbon / orange':['Cobalt / bolt red','#1c45c1']
+};
 const catalog=[
  ['Running tank','Signal orange',clothes,16,20,11,25,10,26,-12],
  ['Club cap','Carbon',null,40,14,15,74,5,31,-9],
@@ -13,7 +19,7 @@ const catalog=[
  ['Track tote','Natural',null,53,81,11,72,81,26,8],
  ['Split shorts','Carbon / orange',clothes,75,80,15,74,41,33,-8],
  ['Race bottle','Signal orange',null,91,74,7,70,94,17,11]
-].map(([name,color,sizes,x,y,w,mx,my,mw,r],i)=>({name,color,sizes:sizes||['One size'],x,y,w,mx,my,mw,r,id:i,code:'LBN-'+String(i+1).padStart(3,'0'),art:(sketchEdition?'ink/':'products/')+String(i+1).padStart(2,'0')+(sketchEdition?'.svg?fit=2':'.png?v=2'),price:null,available:true}));
+].map(([name,color,sizes,x,y,w,mx,my,mw,r],i)=>({name,color:sketchEdition?clubColors[color][0]:color,clubSwatch:sketchEdition?clubColors[color][1]:null,sizes:sizes||['One size'],x,y,w,mx,my,mw,r,id:i,code:'LBN-'+String(i+1).padStart(3,'0'),art:(sketchEdition?'ink/':'products/')+String(i+1).padStart(2,'0')+(sketchEdition?'.svg?club=1':'.png?v=2'),price:null,available:true}));
 const $=s=>document.querySelector(s),board=$('#board'),dialog=$('dialog'),panel=$('#panel');
 const reduce=matchMedia('(prefers-reduced-motion: reduce)'),storageKey='lightning-merch-cart-v1';
 let cart=[],lastFocus;
@@ -44,7 +50,7 @@ dialog.addEventListener('keydown',e=>{
 });
 function product(p){
  const from=board.querySelector('[data-product-id="'+p.id+'"] img').getBoundingClientRect();panel.className='detail';
- const swatch = {'Signal orange':'#ff580b','Carbon':'#272420','Chalk':'#f1e6d5','Bone':'#ede1cc','Natural':'#e4d5b8','Carbon / orange':'#272420','Chalk / orange':'#f1e6d5'}[p.color];
+ const swatch = p.clubSwatch || {'Signal orange':'#ff580b','Carbon':'#272420','Chalk':'#f1e6d5','Bone':'#ede1cc','Natural':'#e4d5b8','Carbon / orange':'#272420','Chalk / orange':'#f1e6d5'}[p.color];
  panel.innerHTML = `
    <div class="stage">
      <img class="hero" src="${p.art}" alt="${p.color} ${p.name}">
