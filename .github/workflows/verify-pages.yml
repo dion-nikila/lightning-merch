@@ -5,10 +5,19 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  statuses: write
+  pages: write
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
+      - name: Enable branch publication on first deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh api "repos/$GITHUB_REPOSITORY/pages" >/dev/null; then
+            gh api -X POST "repos/$GITHUB_REPOSITORY/pages" -f 'source[branch]=gh-pages' -f 'source[path]=/'
+          fi
       - name: Check Pages publication
         shell: bash
         run: |
@@ -25,3 +34,10 @@ jobs:
             sleep 10
           done
           exit 1
+      - name: Record public verification
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state="$RESULT" -f context='Live storefront' -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
