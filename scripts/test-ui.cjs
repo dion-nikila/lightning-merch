@@ -1,15 +1,21 @@
 const {chromium}=require('playwright-core');
 const assert=require('node:assert/strict');
-(async()=>{const browser=await chromium.launch({channel:'chrome',args:['--no-sandbox']});try{for(const width of [320,390,768,1440]){
-const page=await browser.newPage({viewport:{width,height:850},reducedMotion:'reduce'});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+(async()=>{const browser=await chromium.launch({channel:'chrome',args:['--no-sandbox']});try{for(const [width,height] of [[320,480],[390,844],[667,375],[844,390],[768,1024],[1440,900]]){
+const page=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});const errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.goto(process.env.SHOP_URL||'http://localhost:8000');await page.waitForSelector('.item');
 assert.equal(await page.locator('.item').count(),11);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
 if(await page.locator('body[data-edition="sketch"]').count()){
+ const obscured=await page.locator('.item').evaluateAll(items=>items.filter(item=>{
+   const rect=item.querySelector('.art').getBoundingClientRect();
+   const center=document.elementFromPoint((rect.left+rect.right)/2,(rect.top+rect.bottom)/2);
+   return rect.left<0||rect.top<0||rect.right>innerWidth||rect.bottom>innerHeight||!item.contains(center);
+ }).map(item=>item.getAttribute('aria-label')));
+ assert.deepEqual(obscured,[], 'Every drawing must fit on screen and receive taps before scrolling');
  const drawing=await page.locator('#board h1').boundingBox();
  assert(Math.abs(drawing.x+drawing.width/2-width/2)<2);
  assert.equal(await page.locator('body > header').count(),0);
  assert(await page.locator('#board h1 img').evaluate(img=>img.complete&&img.naturalWidth&&img.src.endsWith('/ink/patch.svg')));
- const expected=await page.evaluate(()=>matchMedia('(max-width:700px),(max-aspect-ratio:4/5)').matches?'tall-linked.webp':'wide-linked.webp');
+ const expected=await page.evaluate(()=>matchMedia('(max-width:700px) and (orientation:portrait),(max-aspect-ratio:4/5)').matches?'tall-linked.webp':'wide-linked.webp');
  assert((await page.locator('#board').evaluate(el=>getComputedStyle(el).backgroundImage)).includes(expected));
  for(const [route,asset] of [['#LBN-001','detail-margin.svg'],['#cart','cart-margin.svg']]){
    await page.goto(new URL(route,page.url()).href);

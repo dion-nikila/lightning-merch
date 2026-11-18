@@ -13,7 +13,7 @@ const catalog=[
  ['Track tote','Natural',null,53,81,11,72,81,26,8],
  ['Split shorts','Carbon / orange',clothes,75,80,15,74,41,33,-8],
  ['Race bottle','Signal orange',null,91,74,7,70,94,17,11]
-].map(([name,color,sizes,x,y,w,mx,my,mw,r],i)=>({name,color,sizes:sizes||['One size'],x,y,w,mx,my,mw,r,id:i,code:'LBN-'+String(i+1).padStart(3,'0'),art:(sketchEdition?'ink/':'products/')+String(i+1).padStart(2,'0')+(sketchEdition?'.svg':'.png?v=2'),price:null,available:true}));
+].map(([name,color,sizes,x,y,w,mx,my,mw,r],i)=>({name,color,sizes:sizes||['One size'],x,y,w,mx,my,mw,r,id:i,code:'LBN-'+String(i+1).padStart(3,'0'),art:(sketchEdition?'ink/':'products/')+String(i+1).padStart(2,'0')+(sketchEdition?'.svg?fit=2':'.png?v=2'),price:null,available:true}));
 const $=s=>document.querySelector(s),board=$('#board'),dialog=$('dialog'),panel=$('#panel');
 const reduce=matchMedia('(prefers-reduced-motion: reduce)'),storageKey='lightning-merch-cart-v1';
 let cart=[],lastFocus;
