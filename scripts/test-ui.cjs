@@ -4,6 +4,12 @@ const assert=require('node:assert/strict');
 const page=await browser.newPage({viewport:{width,height:850},reducedMotion:'reduce'});const errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.goto(process.env.SHOP_URL||'http://localhost:8000');await page.waitForSelector('.item');
 assert.equal(await page.locator('.item').count(),11);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+if(await page.locator('body[data-edition="sketch"]').count()){
+ const drawing=await page.locator('#board h1').boundingBox();
+ assert(Math.abs(drawing.x+drawing.width/2-width/2)<2);
+ assert.equal(await page.locator('body > header').count(),0);
+ assert(await page.locator('.item .art').evaluateAll(images=>images.every(img=>img.complete&&img.naturalWidth&&img.src.includes('/ink/'))));
+}
 for(let i=0;i<11;i++){let item=page.locator('.item').nth(i);await item.click();await page.waitForSelector('dialog[open] .hero');assert(await page.locator('.hero').evaluate(img=>img.complete&&img.naturalWidth>0));await page.getByRole('button',{name:'← Back'}).click();await page.waitForSelector('dialog[open]',{state:'hidden'})}
 await page.locator('.item').first().click();await page.getByRole('button',{name:'M',exact:true}).click();await page.locator('.buy').click();await page.locator('dialog .cart-button').click();assert((await page.locator('.line').innerText()).toUpperCase().includes('/ M'));await page.locator('#back').click();await page.getByRole('button',{name:'Next item'}).click();assert.equal((await page.locator('#title').innerText()).toUpperCase(),'CLUB CAP');await page.keyboard.press('ArrowLeft');await page.keyboard.press('Escape');await page.waitForSelector('dialog[open]',{state:'hidden'});assert.deepEqual(errors,[]);await page.close();console.log('PASS',width)}}
 finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)})
