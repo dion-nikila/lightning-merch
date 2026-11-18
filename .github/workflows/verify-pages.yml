@@ -1,0 +1,27 @@
+name: Verify public storefront
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Pages publication
+        shell: bash
+        run: |
+          site=https://dion-nikila.github.io/lightning-merch
+          for attempt in {1..12}; do
+            if curl -fsSL "$site/" | grep -Fq 'Merchandise sticker board'; then
+              curl -fsS "$site/shop.js" -o /tmp/shop.js
+              node --check /tmp/shop.js
+              for item in {01..11}; do
+                curl -fsS "$site/products/$item.png" -o "/tmp/sticker-$item.png"
+              done
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
