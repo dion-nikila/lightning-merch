@@ -1,4 +1,4 @@
-from PIL import Image,ImageDraw,ImageFilter,ImageChops
+from PIL import Image,ImageDraw,ImageFilter,ImageOps
 from pathlib import Path
 import random
 out=Path(__file__).parent.parent/'products'
@@ -41,7 +41,7 @@ def make(i,kind,color):
         poly([(12,31),(59,31),(62,73),(9,73)],ivory,ink)
         line([(13,35),(57,35)],seam);line([(14,69),(57,69)],seam);bolt(29,41,.95,orange)
     elif kind=='socks':
-        for x,y in ((30,6),(7,12)):
+        for x,y in ((34,6),(11,12)):
             poly([(x+3,y),(x+21,y),(x+19,y+35),(x+14,y+45),(x+2,y+57),(x-4,y+59),(x-9,y+55),(x-9,y+49),(x+2,y+34)],ivory,ink)
             for dy in (7,12):line([(x+4,y+dy),(x+19,y+dy)],orange,3)
             line([(x+3,y+35),(x+9,y+39)],seam)
@@ -57,6 +57,12 @@ def make(i,kind,color):
             if a:
                 n=rng.uniform(-8,8)+(4 if x%3==0 else -3)+(4 if y%3==0 else 0)
                 im.putpixel((x,y),tuple(max(0,min(255,round(v+n))) for v in (r,g,b))+(255,))
-    rim=mask.filter(ImageFilter.MaxFilter(5)); sticker=Image.new('RGBA',im.size,'white');sticker.putalpha(rim);sticker.alpha_composite(im)
-    sticker.crop(sticker.getbbox()).save(out/f'{i+1:02}.png')
+    # Give dilation room even when a sleeve ends against the drawing canvas.
+    im = ImageOps.expand(im, border=5, fill=(0,0,0,0))
+    rim = im.getchannel('A').filter(ImageFilter.MaxFilter(5))
+    sticker = Image.new('RGBA', im.size, 'white')
+    sticker.putalpha(rim)
+    sticker.alpha_composite(im)
+    framed = ImageOps.expand(sticker.crop(sticker.getbbox()), border=3, fill=(0,0,0,0))
+    framed.save(out/f'{i+1:02}.png')
 for i,(k,c) in enumerate([('tank',orange),('cap',ink),('tank',ivory),('socks',ivory),('sweat',ivory),('tee',ink),('cap',orange),('tank',ink),('tote',ivory),('shorts',ink),('bottle',orange)]):make(i,k,c)

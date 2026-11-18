@@ -23,7 +23,7 @@ jobs:
         run: |
           site=https://dion-nikila.github.io/lightning-merch
           for attempt in {1..12}; do
-            if curl -fsSL "$site/" | grep -Fq 'Merchandise sticker board'; then
+            if curl -fsSL "$site/?verify=$GITHUB_SHA" | grep -Fq 'shop.js?v=2'; then
               curl -fsS "$site/shop.js" -o /tmp/shop.js
               node --check /tmp/shop.js
               for item in {01..11}; do
@@ -34,6 +34,13 @@ jobs:
             sleep 10
           done
           exit 1
+      - uses: actions/checkout@v4
+      - name: Exercise the deployed shop on phone, tablet and desktop
+        env:
+          SHOP_URL: https://dion-nikila.github.io/lightning-merch/?verify=${{ github.sha }}
+        run: |
+          npm install --prefix "$RUNNER_TEMP/shop-tests" playwright-core@1.55.0
+          NODE_PATH="$RUNNER_TEMP/shop-tests/node_modules" node scripts/test-ui.cjs
       - name: Record public verification
         if: always()
         env:
