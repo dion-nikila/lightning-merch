@@ -23,7 +23,7 @@ jobs:
         run: |
           site=https://dion-nikila.github.io/lightning-merch
           for attempt in {1..12}; do
-            if curl -fsSL "$site/sketch/?verify=$GITHUB_SHA" | grep -Fq 'paper.js?drawing=4'; then
+            if curl -fsSL "$site/sketch/?verify=$GITHUB_SHA" | grep -Fq 'paper.js?drawing=5'; then
               curl -fsS "$site/shop.js" -o /tmp/shop.js
               node --check /tmp/shop.js
               for item in {01..11}; do

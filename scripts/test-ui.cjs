@@ -8,6 +8,17 @@ if(await page.locator('body[data-edition="sketch"]').count()){
  const drawing=await page.locator('#board h1').boundingBox();
  assert(Math.abs(drawing.x+drawing.width/2-width/2)<2);
  assert.equal(await page.locator('body > header').count(),0);
+ assert(await page.locator('#board h1 img').evaluate(img=>img.complete&&img.naturalWidth&&img.src.endsWith('/ink/patch.svg')));
+ const expected=await page.evaluate(()=>matchMedia('(max-width:700px),(max-aspect-ratio:4/5)').matches?'tall-linked.webp':'wide-linked.webp');
+ assert((await page.locator('#board').evaluate(el=>getComputedStyle(el).backgroundImage)).includes(expected));
+ for(const [route,asset] of [['#LBN-001','detail-margin.svg'],['#cart','cart-margin.svg']]){
+   await page.goto(new URL(route,page.url()).href);
+   await page.waitForSelector(route==='#cart'?'dialog[open] .cart':'dialog[open] .detail');
+   const url=await page.locator('dialog').evaluate(el=>getComputedStyle(el).backgroundImage.match(/url\("?(.*?)"?\)/)[1]);
+   assert(url.endsWith(asset));assert((await page.request.get(url)).ok());
+ }
+ await page.goto(process.env.SHOP_URL||'http://localhost:8000');
+
  assert(await page.locator('.item .art').evaluateAll(images=>images.every(img=>img.complete&&img.naturalWidth&&img.src.includes('/ink/'))));
 }
 for(let i=0;i<11;i++){let item=page.locator('.item').nth(i);await item.click();await page.waitForSelector('dialog[open] .hero');assert(await page.locator('.hero').evaluate(img=>img.complete&&img.naturalWidth>0));await page.getByRole('button',{name:'← Back'}).click();await page.waitForSelector('dialog[open]',{state:'hidden'})}
