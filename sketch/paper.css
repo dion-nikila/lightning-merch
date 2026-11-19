@@ -34,3 +34,20 @@ dialog[open]:has(.cart){background-image:url(ink/cart-hand.svg)}
 
 #board .item .art,.hero,.line img{filter:drop-shadow(0 1px 1px #33271830)}
 @media(hover:hover){#board .item:hover .art{filter:drop-shadow(1px 3px 2px #33271838)}}
+
+#board::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url(ink/board-wide.svg) center / 100% 100% no-repeat;
+}
+#board .item[data-product-id="11"] { width: clamp(64px, 12vw, 175px); }
+@media (max-width:700px) and (orientation:portrait), (max-aspect-ratio:4/5) {
+  #board::before { background-image: url(ink/board-tall.svg); }
+  #board .item[data-product-id="11"] { width: clamp(64px, 20vw, 126px); }
+}
+.pencil-ring path { opacity: 0; }
+.item:focus-visible .pencil-ring path, .item:active .pencil-ring path { opacity: .86; }
+@media (hover:hover) { .item:hover .pencil-ring path { opacity: .86; } }

@@ -1,7 +1,7 @@
 'use strict';
 const sketchEdition=document.body.dataset.edition==='sketch';
 const clothes=['S','M','L','XL'];
-const penColors=[null,'Blue ink','Paper / orange','Paper / orange','Paper / black','Blue ink','Orange ink','Blue / orange','Paper / orange','Blue / orange','Blue ink'];
+const penColors=[null,'Blue ink','Paper / orange','Paper / orange','Paper / black','Blue ink','Orange ink','Blue / orange','Paper / orange','Blue / orange','Blue ink','Orange ink'];
 const penSwatches={'Blue ink':'#313893','Paper / orange':'#fff8ec','Paper / black':'#f8f5ed','Orange ink':'#e38024','Blue / orange':'#313893'};
 const catalog=[
  ['Running tank','Signal orange',clothes,16,20,11,25,10,26,-12],
@@ -14,8 +14,9 @@ const catalog=[
  ['Race singlet','Carbon / orange',clothes,30,83,11,27,68,26,-10],
  ['Track tote','Natural',null,53,81,11,72,81,26,8],
  ['Split shorts','Carbon / orange',clothes,75,80,15,74,41,33,-8],
- ['Race bottle','Signal orange',null,91,74,7,70,94,17,11]
-].map(([name,color,sizes,x,y,w,mx,my,mw,r],i)=>({name,color:sketchEdition?penColors[i]:color,clubSwatch:sketchEdition?penSwatches[penColors[i]]:null,sizes:sizes||['One size'],x,y,w,mx,my,mw,r,id:i,code:'LBN-'+String(i+1).padStart(3,'0'),art:(sketchEdition?'hand/':'products/')+String(i+1).padStart(2,'0')+(sketchEdition?'.webp':'.png?v=2'),price:null,available:true})).filter(p=>!sketchEdition||p.id!==0);
+ ['Race bottle','Signal orange',null,91,74,7,70,94,17,11],
+ ...(sketchEdition ? [['Club bandana','Orange ink',null,36,64,12,24,31,18,-5]] : [])
+].map(([name,color,sizes,x,y,w,mx,my,mw,r],i)=>({name,color:sketchEdition?penColors[i]:color,clubSwatch:sketchEdition?penSwatches[penColors[i]]:null,sizes:sizes||['One size'],x,y,w,mx,my,mw,r,id:i,code:'LBN-'+String(i+1).padStart(3,'0'),detailArt:sketchEdition?'hand/'+String(i+1).padStart(2,'0')+'.svg':null,art:(sketchEdition?'hand/thumb/':'products/')+String(i+1).padStart(2,'0')+(sketchEdition?'.webp':'.png?v=2'),price:null,available:true})).filter(p=>!sketchEdition||p.id!==0);
 const byId=new Map(catalog.map(p=>[p.id,p]));
 const $=s=>document.querySelector(s),board=$('#board'),dialog=$('dialog'),panel=$('#panel');
 const reduce=matchMedia('(prefers-reduced-motion: reduce)'),storageKey=sketchEdition?'lightning-hand-cart-v1':'lightning-merch-cart-v1';
@@ -50,7 +51,7 @@ function product(p){
  const swatch = p.clubSwatch || {'Signal orange':'#ff580b','Carbon':'#272420','Chalk':'#f1e6d5','Bone':'#ede1cc','Natural':'#e4d5b8','Carbon / orange':'#272420','Chalk / orange':'#f1e6d5'}[p.color];
  panel.innerHTML = `
    <div class="stage">
-     <img class="hero" src="${p.art}" alt="${p.color} ${p.name}">
+     <img class="hero" src="${p.detailArt||p.art}" alt="${p.color} ${p.name}">
      <nav class="piece-nav" aria-label="Browse the collection">
        <button data-step="-1" aria-label="Previous item">←</button>
        <span>${String(catalog.indexOf(p)+1).padStart(2,'0')} <em>/</em> ${catalog.length}</span>
