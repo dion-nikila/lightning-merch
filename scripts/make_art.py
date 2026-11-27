@@ -1,8 +1,15 @@
-from PIL import Image,ImageDraw,ImageFilter,ImageOps
+from PIL import Image,ImageColor,ImageDraw,ImageFilter,ImageOps
 from pathlib import Path
 import random
 out=Path(__file__).parent.parent/'products'
 ink='#24211f'; ivory='#f4e9d6'; orange='#ff580b'
+blue='#1b46c2'; red='#c62e2e'
+# Reuse the original drawings and stable item numbers for Bolt Space.
+club_palettes = {
+    0: {orange: red, '#bb3905': '#8f252c', '#fff7ec': '#fffdf6'},
+    3: {ivory: '#f7f6ed', ink: blue, '#b5a791': '#9baccf'},
+    5: {ink: blue, '#45403a': '#112d84', '#fff7ec': '#fffdf6'},
+}
 def make(i,kind,color):
     im=Image.new('RGBA',(72,82))
     d=ImageDraw.Draw(im)
@@ -43,19 +50,25 @@ def make(i,kind,color):
     elif kind=='socks':
         for x,y in ((34,6),(11,12)):
             poly([(x+3,y),(x+21,y),(x+19,y+35),(x+14,y+45),(x+2,y+57),(x-4,y+59),(x-9,y+55),(x-9,y+49),(x+2,y+34)],ivory,ink)
-            for dy in (7,12):line([(x+4,y+dy),(x+19,y+dy)],orange,3)
+            for dy,stripe in ((7, blue), (12, red)):
+                line([(x+4,y+dy),(x+19,y+dy)],stripe,3)
             line([(x+3,y+35),(x+9,y+39)],seam)
     elif kind=='bottle':
         d.rounded_rectangle((27,5,48,17),radius=4,outline=ink,width=4);d.rectangle((23,15,46,22),fill=ink)
         poly([(23,23),(46,23),(50,32),(49,73),(46,76),(20,76),(18,72),(19,31)],color,seam)
         for y in (31,69):line([(21,y),(47,y)],seam,2)
         line([(22,35),(22,66)],'#ffa146',2);bolt(27,37,1,accent)
-    mask=im.getchannel('A'); rng=random.Random(i+112)
+    palette = {ImageColor.getrgb(a): ImageColor.getrgb(b)
+               for a,b in club_palettes.get(i, {}).items()}
+    rng=random.Random(i+112)
     for y in range(82):
         for x in range(72):
             r,g,b,a=im.getpixel((x,y))
             if a:
+                r,g,b = palette.get((r,g,b), (r,g,b))
                 n=rng.uniform(-8,8)+(4 if x%3==0 else -3)+(4 if y%3==0 else 0)
+                if palette and (x + 2*y) % 5 < 3:
+                    n = 0
                 im.putpixel((x,y),tuple(max(0,min(255,round(v+n))) for v in (r,g,b))+(255,))
     # Give dilation room even when a sleeve ends against the drawing canvas.
     im = ImageOps.expand(im, border=5, fill=(0,0,0,0))
