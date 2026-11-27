@@ -8,7 +8,7 @@ const count=hand?11:3;assert.equal(await page.locator('.item').count(),count);as
 if (!hand) {
   assert.deepEqual(await page.locator('.item').evaluateAll(items => items.map(item => item.getAttribute('aria-label'))), ['Tee', 'Tank', 'Socks']);
   assert.equal((await page.locator('#welcome').textContent()).trim(), 'you have entered bolt space');
-  await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(() => Promise.all([document.fonts.ready, ...[...document.querySelectorAll('.item img')].map(img => img.decode())]));
   const layout = await page.evaluate(() => {
     const board = document.querySelector('#board').getBoundingClientRect();
     const heading = document.querySelector('#welcome').getBoundingClientRect();
@@ -17,14 +17,16 @@ if (!hand) {
     return {
       centered: Math.abs(heading.left + heading.width / 2 - (board.left + board.width / 2)) < 2 &&
         Math.abs(heading.top + heading.height / 2 - (board.top + board.height / 2)) < 2,
-      reachable: targets.every(target => {
+      unreachable: targets.flatMap(target => {
         const rect = target.getBoundingClientRect();
-        return !overlaps(rect) && rect.top >= 0 && rect.bottom <= innerHeight &&
-          target.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+        const hit = target.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+        return !overlaps(rect) && rect.top >= 0 && rect.bottom <= innerHeight && hit ? [] :
+          [{piece: target.getAttribute('aria-label'), top: rect.top, bottom: rect.bottom, overlap: overlaps(rect), hit}];
       })
     };
   });
-  assert(layout.centered && layout.reachable, 'Welcome and three product targets must fit at ' + width);
+  assert(layout.centered, 'Welcome must be centred at ' + width);
+  assert.deepEqual(layout.unreachable, [], 'Product targets must fit at ' + width);
 }
 if(hand){
  const obscured=await page.locator('.item').evaluateAll(items=>items.filter(item=>{
