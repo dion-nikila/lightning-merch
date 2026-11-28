@@ -317,7 +317,7 @@ for (const product of boltCollection) {
   const tile = button('', product.name, () => openPage(product.code));
   tile.className = 'item';
   tile.dataset.productId = product.id;
-  tile.append(image(product.art, '', 'art'), element('span', 'item-name', product.name));
+  tile.append(image(product.art, '', 'art'));
   tile.addEventListener('pointermove', event => {
     if (event.pointerType !== 'mouse' || motionsOff.matches) return;
     const bounds = tile.getBoundingClientRect();
